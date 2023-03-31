@@ -73,6 +73,8 @@ export function isPointOnEdgeOfSimplePolygon(point: Point, poly: Polygon): boole
  * Find the point on a SIMPLE (non-self-intersecting) polygon which is closest to the
  * target point. If the target point is inside the polygon or on an edge of the polygon,
  * it IS the closest point.
+ * 
+ * Code ported from https://javedali-iitkgp.medium.com/get-closest-point-on-a-polygon-23b68e26a33.
  */
 export function closestPointOnSimplePolygonToTarget(poly: Polygon, target: Point): Point {
     if (
@@ -87,6 +89,10 @@ export function closestPointOnSimplePolygonToTarget(poly: Polygon, target: Point
     }
 
     // Case 3: the point is outside the polygon..
+    //
+    // Honestly, I understand some of the principles behind this algorithm, but I don't
+    // understand it fully and I wouldn't have been able to come up with it myself in any
+    // sane amount of time. Thankfully we have the internet.
 
     const nvert = poly.length;
     const [tx, ty] = target;
@@ -134,5 +140,7 @@ export function closestPointOnSimplePolygonToTarget(poly: Polygon, target: Point
 		}
 	}
 
+    // Assuming a valid polygon is passed to the function and not some garbage,
+    // these variables are guaranteed to have been assigned.
 	return [min_x!, min_y!];
 }

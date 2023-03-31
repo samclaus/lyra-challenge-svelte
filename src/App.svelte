@@ -1,4 +1,5 @@
 <script lang="ts">
+    import IconButton from "./ui/IconButton.svelte";
 </script>
 
 <main>
@@ -7,6 +8,14 @@
         aria-label="Main toolbar"
         role="toolbar"
         aria-orientation="vertical">
+
+        <IconButton label="Select" icon="cursor" />
+        <IconButton label="Move" icon="move" />
+        <IconButton label="Closest point" icon="closest-point" />
+
+        <IconButton label="Triangle" icon="triangle" />
+        <IconButton label="Square" icon="square" />
+        <IconButton label="Hexagon" icon="hexagon" />
 
     </div>
     <div id="canvas">

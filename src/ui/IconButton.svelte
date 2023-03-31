@@ -19,7 +19,7 @@
 <style>
     button {
         margin: 0;
-        padding: 12px;
+        padding: 8px;
 
         background-color: transparent;
         border: 1px solid black;
@@ -27,7 +27,9 @@
     }
 
     svg {
+        display: block;
         width: 24px;
         height: 24px;
+        line-height: 24px;
     }
 </style>

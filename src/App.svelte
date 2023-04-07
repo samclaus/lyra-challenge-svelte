@@ -106,47 +106,53 @@
 
         <button
             aria-label="Select"
+            aria-keyshortcuts="1"
             aria-pressed={activeTool === "select"}
             on:click={() => activeTool = "select"}>
             <svg><use xlink:href="#cursor" /></svg>
-            <kbd>1</kbd>
+            <kbd aria-hidden="true">1</kbd>
         </button>
         <button
             aria-label="Move"
+            aria-keyshortcuts="2"
             aria-pressed={activeTool === "move"}
             on:click={() => activeTool = "move"}>
             <svg><use xlink:href="#move" /></svg>
-            <kbd>2</kbd>
+            <kbd aria-hidden="true">2</kbd>
         </button>
         <button
             style="margin-bottom: 40px;"
             aria-label="Closest points"
+            aria-keyshortcuts="3"
             aria-pressed={activeTool === "closest-points"}
             on:click={() => activeTool = "closest-points"}>
             <svg><use xlink:href="#closest-point" /></svg>
-            <kbd>3</kbd>
+            <kbd aria-hidden="true">3</kbd>
         </button>
 
         <button
             aria-label="Triangle"
+            aria-keyshortcuts="4"
             aria-pressed={activeTool === "triangle"}
             on:click={() => activeTool = "triangle"}>
             <svg><use xlink:href="#triangle" /></svg>
-            <kbd>4</kbd>
+            <kbd aria-hidden="true">4</kbd>
         </button>
         <button
             aria-label="Square"
+            aria-keyshortcuts="5"
             aria-pressed={activeTool === "square"}
             on:click={() => activeTool = "square"}>
             <svg><use xlink:href="#square" /></svg>
-            <kbd>5</kbd>
+            <kbd aria-hidden="true">5</kbd>
         </button>
         <button
             aria-label="Hexagon"
+            aria-keyshortcuts="6"
             aria-pressed={activeTool === "hexagon"}
             on:click={() => activeTool = "hexagon"}>
             <svg><use xlink:href="#hexagon" /></svg>
-            <kbd>6</kbd>
+            <kbd aria-hidden="true">6</kbd>
         </button>
 
     </div>

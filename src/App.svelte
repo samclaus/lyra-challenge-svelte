@@ -108,6 +108,8 @@
             const tool = KEY_TO_TOOL[ev.key];
 
             if (tool) {
+                ev.preventDefault();
+                ev.stopPropagation();
                 activeTool = tool;
             }
         }
@@ -177,7 +179,6 @@
         viewBox="0 0 {svgWidth} {svgHeight}"
         xmlns="http://www.w3.org/2000/svg"
         bind:this={svgEl}
-        on:mousemove={onMouseMove}
         on:click={onClick}>
 
         {#each polygons as poly}
@@ -194,7 +195,13 @@
             point for the covered one will still be visible.
         -->
         {#each closestPoints as [x, y]}
-            <circle cx={x} cy={y} r="5" fill="#D500F9" />
+            <circle
+                fill="#D500F9"
+                stroke="#651FFF"
+                stroke-width="1"
+                cx={x}
+                cy={y}
+                r="5" />
         {/each}
 
         {#if addPolyPreview}
@@ -210,7 +217,7 @@
 
 </main>
 
-<svelte:window on:keydown|capture={onKeyDown} />
+<svelte:window on:keydown|capture={onKeyDown} on:mousemove={onMouseMove} />
 
 <style>
     main {

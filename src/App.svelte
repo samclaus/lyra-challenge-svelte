@@ -1,9 +1,9 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { closestPointOnSimplePolygonToTarget, type Point, type Polygon } from "./closest-point";
-    import IconButton from "./ui/IconButton.svelte";
     import type { Unsubscriber } from "svelte/store";
 
+    let activeTool: "select" | "move" | "closest-points" | "triangle" | "square" | "hexagon" = "triangle";
     let polygons: Polygon[] = [];
     let closestPoints: Point[] = [];
     let svgEl: SVGElement;
@@ -112,13 +112,43 @@
         role="toolbar"
         aria-orientation="vertical">
 
-        <IconButton label="Select" icon="cursor" />
-        <IconButton label="Move" icon="move" />
-        <IconButton label="Closest point" icon="closest-point" />
+        <button
+            aria-label="Select"
+            aria-pressed={activeTool === "select"}
+            on:click={() => activeTool = "select"}>
+            <svg><use xlink:href="#cursor" /></svg>
+        </button>
+        <button
+            aria-label="Move"
+            aria-pressed={activeTool === "move"}
+            on:click={() => activeTool = "move"}>
+            <svg><use xlink:href="#move" /></svg>
+        </button>
+        <button
+            aria-label="Closest points"
+            aria-pressed={activeTool === "closest-points"}
+            on:click={() => activeTool = "closest-points"}>
+            <svg><use xlink:href="#closest-point" /></svg>
+        </button>
 
-        <IconButton label="Triangle" icon="triangle" on:click={addTriangle} />
-        <IconButton label="Square" icon="square" on:click={addSquare} />
-        <IconButton label="Hexagon" icon="hexagon" on:click={addHexagon} />
+        <button
+            aria-label="Triangle"
+            aria-pressed={activeTool === "triangle"}
+            on:click={addTriangle}>
+            <svg><use xlink:href="#triangle" /></svg>
+        </button>
+        <button
+            aria-label="Square"
+            aria-pressed={activeTool === "square"}
+            on:click={addSquare}>
+            <svg><use xlink:href="#square" /></svg>
+        </button>
+        <button
+            aria-label="Hexagon"
+            aria-pressed={activeTool === "hexagon"}
+            on:click={addHexagon}>
+            <svg><use xlink:href="#hexagon" /></svg>
+        </button>
 
     </div>
 
@@ -155,6 +185,10 @@
     }
 
     #main-toolbar {
+        --item-padding: 20px;
+
+        padding: var(--item-padding);
+
         min-width: 80px;
 
         display: flex;
@@ -163,6 +197,30 @@
 
         background-color: white;
         color: black;
+    }
+
+    button {
+        margin: 0;
+        padding: 8px;
+
+        background-color: transparent;
+        border: 1px solid black;
+        border-radius: 4px;
+    }
+
+    button:not(:first-child) {
+        margin-top: var(--item-padding);
+    }
+
+    button[aria-pressed="true"] {
+        background-color: #00E676;
+    }
+
+    button > svg {
+        display: block;
+        width: 24px;
+        height: 24px;
+        line-height: 24px;
     }
 
     #canvas {

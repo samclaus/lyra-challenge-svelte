@@ -1,17 +1,57 @@
 <script lang="ts">
-    import type { Polygon } from "./closest-point";
+    import { onMount } from "svelte";
+    import { closestPointOnSimplePolygonToTarget, type Point, type Polygon } from "./closest-point";
     import IconButton from "./ui/IconButton.svelte";
+    import type { Unsubscriber } from "svelte/store";
 
     let polygons: Polygon[] = [];
+    let closestPoints: Point[] = [];
+    let svgEl: SVGElement;
+    let svgWidth: number;
+    let svgHeight: number;
+    let mouseLoc: Point = [0, 0];
+    let counter = 0;
+
+    // TODO
+    //
+    // Svelte supports bind:clientWidth and bind:clientHeight (and a couple others) to trivially
+    // watch the size of an element with just a couple lines of code, not to mention the reactive
+    // stuff gets cleaned up automatically when the component is destroyed, but..
+    //
+    // Unfortunately, those bindings were implemented before the ResizeObserver API was widely
+    // supported, and they work using a hack that involves adding an <iframe> as a child of the
+    // observed element, meaning we cannot use them for an <svg> element directly, not to mention
+    // worse performance than the ResizeObserver API (although that is irrelevant in this simple
+    // scenario). I could have wrapped the <svg> canvas in a <div>, but I decided that was more
+    // convoluted than just using a ResizeObserver manually with the Svelte onMount API.
+    //
+    // See https://github.com/sveltejs/svelte/issues/7583
+    onMount((): Unsubscriber => {
+        const obs = new ResizeObserver(entries => {
+            for (const { contentBoxSize: [size] } of entries) {
+                console.log(size.inlineSize, size.blockSize);
+            }
+        });
+        obs.observe(svgEl);
+        return () => obs.disconnect(); // Svelte will call this when the component is destroyed
+    });
+
+    function getRandomIntCoords(): Point {
+        const { width, height } = svgEl.getBoundingClientRect();
+
+        return [
+            Math.round(Math.random() * width),
+            Math.round(Math.random() * height),
+        ];
+    }
 
     function addTriangle(ev: MouseEvent): void {
-        const x = Math.round(Math.random() * 100);
-        const y = Math.round(Math.random() * 100);
+        const [x, y] = getRandomIntCoords();
 
         polygons.push([
             [x, y],
-            [x + 9, y + 12],
-            [x - 9, y + 12],
+            [x + 45, y + 60],
+            [x - 45, y + 60],
         ]);
 
         // Svelte reactivity is based on assignments; it will remove this no-op
@@ -19,14 +59,13 @@
     }
 
     function addSquare(ev: MouseEvent): void {
-        const x = Math.round(Math.random() * 100);
-        const y = Math.round(Math.random() * 100);
+        const [x, y] = getRandomIntCoords();
 
         polygons.push([
             [x, y],
-            [x + 12, y],
-            [x + 12, y + 12],
-            [x, y + 12],
+            [x + 50, y],
+            [x + 50, y + 50],
+            [x, y + 50],
         ]);
 
         // Svelte reactivity is based on assignments; it will remove this no-op
@@ -34,15 +73,14 @@
     }
 
     function addHexagon(ev: MouseEvent): void {
-        const x = Math.round(Math.random() * 100);
-        const y = Math.round(Math.random() * 100);
+        const [x, y] = getRandomIntCoords();
         const poly: Polygon = [
-            [x + 10, y + 0],
-            [x + 5, y + 8.66],
-            [x + -5, y + 8.66],
-            [x + -10, y + 0],
-            [x + -5, y + -8.66],
-            [x + 5, y + -8.66],
+            [x + 50, y + 0],
+            [x + 25, y + 43.33],
+            [x + -25, y + 43.33],
+            [x + -50, y + 0],
+            [x + -25, y + -43.33],
+            [x + 25, y + -43.33],
         ];
 
         polygons.push(poly);
@@ -50,9 +88,30 @@
         // Svelte reactivity is based on assignments; it will remove this no-op
         polygons = polygons;
     }
+
+    function onMouseMove(ev: MouseEvent): void {
+        // const rect = svgEl.getBoundingClientRect();
+
+        // mouseLoc = [
+        //     (ev.clientX - rect.left) / rect.width * 100,
+        //     (ev.clientY - rect.top) / rect.height * 100,
+        // ];
+        // closestPoints = polygons.map(
+        //     poly => closestPointOnSimplePolygonToTarget(poly, mouseLoc),
+        // );
+        // counter += 1;
+    }
+
+    function onClick(ev: MouseEvent): void {
+        const { left, top } = svgEl.getBoundingClientRect();
+
+        closestPoints.push([ev.clientX - left, ev.clientY - top]);
+        closestPoints = closestPoints;
+    }
 </script>
 
 <main>
+
     <div
         id="main-toolbar"
         aria-label="Main toolbar"
@@ -68,11 +127,25 @@
         <IconButton label="Hexagon" icon="hexagon" on:click={addHexagon} />
 
     </div>
-    <svg id="canvas" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        {#each polygons as p}
-            <polygon stroke="blue" fill="red" points={p.map(([x, y]) => x + "," + y).join(" ")} />
+
+
+    <!-- Sorry Svelte, this element is not keyboard accessible -->
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <svg
+        id="canvas"
+        viewBox="0 0 {svgWidth} {svgHeight}"
+        xmlns="http://www.w3.org/2000/svg"
+        bind:this={svgEl}
+        on:mousemove={onMouseMove}
+        on:click={onClick}>
+        {#each polygons as poly}
+            <polygon stroke="blue" fill="red" points={poly.map(([x, y]) => x + "," + y).join(" ")} />
+        {/each}
+        {#each closestPoints as [x, y]}
+            <circle cx={x} cy={y} r="5" fill="red" />
         {/each}
     </svg>
+
 </main>
 
 <style>
@@ -91,9 +164,11 @@
         align-items: center;
 
         background-color: white;
+        color: black;
     }
 
     #canvas {
         flex: 1 0 0;
+        height: 100%;
     }
 </style>

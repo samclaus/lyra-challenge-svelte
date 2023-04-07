@@ -289,4 +289,12 @@
     #canvas.select polygon {
         cursor: pointer;
     }
+
+    #canvas.move polygon {
+        cursor: move;
+    }
+
+    #canvas.closest-points {
+        cursor: crosshair;
+    }
 </style>

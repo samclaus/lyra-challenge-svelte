@@ -51,9 +51,18 @@
     let closestPoints: Point[] = [];
     let svgEl: SVGElement;
     let selectedIndex = -1;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
 
-    $: if (activeTool !== "select") {
-        selectedIndex = -1;
+    $: {
+        if (activeTool !== "select") {
+            selectedIndex = -1;
+        }
+        if (activeTool !== "closest-points") {
+            closestPoints = [];
+        }
+        
+        addPolyPreview = BASE_POLYGONS[activeTool]?.map(([x, y]) => [x + lastMouseX, y + lastMouseY]);
     }
 
     function onMouseMove(ev: MouseEvent): void {
@@ -61,6 +70,8 @@
         const mouseX = ev.clientX - left;
         const mouseY = ev.clientY - top;
 
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
         closestPoints = activeTool === "closest-points" ? polygons.map(
             poly => closestPointOnSimplePolygonToTarget(poly, [mouseX, mouseY]),
         ) : [];

@@ -163,6 +163,7 @@
     <svg
         id="canvas"
         xmlns="http://www.w3.org/2000/svg"
+        class={activeTool}
         bind:this={svgEl}
         on:click={onClick}>
 
@@ -279,5 +280,9 @@
     #canvas {
         flex: 1 0 0;
         height: 100%;
+    }
+
+    #canvas.select polygon {
+        cursor: pointer;
     }
 </style>

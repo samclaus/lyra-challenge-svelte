@@ -54,6 +54,7 @@
     let svgEl: SVGElement;
     let svgWidth: number;
     let svgHeight: number;
+    let selectedIndex = -1;
 
     /**
      * TODO
@@ -93,6 +94,15 @@
     }
 
     function onClick(ev: MouseEvent): void {
+        if (activeTool === "select" && ev.target instanceof SVGPolygonElement) {
+            const index = +(ev.target.dataset.index as any);
+
+            if (Number.isSafeInteger(index)) {
+                selectedIndex = index;
+                return;
+            }
+        }
+
         const { top, left } = svgEl.getBoundingClientRect();
         const mouseX = ev.clientX - left;
         const mouseY = ev.clientY - top;
@@ -181,9 +191,10 @@
         bind:this={svgEl}
         on:click={onClick}>
 
-        {#each polygons as poly}
+        {#each polygons as poly, i (i)}
             <polygon
-                fill="#E53935"
+                data-index={i}
+                fill={i === selectedIndex ? "#00897B" : "#E53935"}
                 stroke="#00897B"
                 stroke-width="3"
                 points={poly.map(([x, y]) => x + "," + y).join(" ")} />
@@ -194,7 +205,7 @@
             of the polygons, meaning that if two polygons are overlapping, the closest
             point for the covered one will still be visible.
         -->
-        {#each closestPoints as [x, y]}
+        {#each closestPoints as [x, y], i (i)}
             <circle
                 fill="#D500F9"
                 stroke="#651FFF"

@@ -9,8 +9,6 @@
     let svgEl: SVGElement;
     let svgWidth: number;
     let svgHeight: number;
-    let mouseLoc: Point = [0, 0];
-    let counter = 0;
 
     // TODO
     //
@@ -90,20 +88,16 @@
     }
 
     function onMouseMove(ev: MouseEvent): void {
-        // const rect = svgEl.getBoundingClientRect();
+        const { top, left } = svgEl.getBoundingClientRect();
+        const mouseLoc: Point = [ev.clientX - left, ev.clientY - top];
 
-        // mouseLoc = [
-        //     (ev.clientX - rect.left) / rect.width * 100,
-        //     (ev.clientY - rect.top) / rect.height * 100,
-        // ];
-        // closestPoints = polygons.map(
-        //     poly => closestPointOnSimplePolygonToTarget(poly, mouseLoc),
-        // );
-        // counter += 1;
+        closestPoints = polygons.map(
+            poly => closestPointOnSimplePolygonToTarget(poly, mouseLoc),
+        );
     }
 
     function onClick(ev: MouseEvent): void {
-        const { left, top } = svgEl.getBoundingClientRect();
+        const { top, left } = svgEl.getBoundingClientRect();
 
         closestPoints.push([ev.clientX - left, ev.clientY - top]);
         closestPoints = closestPoints;
@@ -146,7 +140,7 @@
                 points={poly.map(([x, y]) => x + "," + y).join(" ")} />
         {/each}
         {#each closestPoints as [x, y]}
-            <circle cx={x} cy={y} r="5" fill="red" />
+            <circle cx={x} cy={y} r="5" fill="#D500F9" />
         {/each}
     </svg>
 

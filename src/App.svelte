@@ -52,6 +52,10 @@
     let svgEl: SVGElement;
     let selectedIndex = -1;
 
+    $: if (activeTool !== "select") {
+        selectedIndex = -1;
+    }
+
     function onMouseMove(ev: MouseEvent): void {
         const { top, left } = svgEl.getBoundingClientRect();
         const mouseX = ev.clientX - left;

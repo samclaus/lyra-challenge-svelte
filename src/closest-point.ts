@@ -10,6 +10,20 @@ export type Point = [number, number];
 export type Polygon = Point[];
 
 /**
+ * Creates a deep copy of the given point.
+ */
+export function clonePoint([x, y]: Point): Point {
+    return [x, y];
+}
+
+/**
+ * Creates a deep copy of the given polygon.
+ */
+export function clonePolygon(p: Polygon): Polygon {
+    return p.map(clonePoint);
+}
+
+/**
  * Check if a point is inside of a SIMPLE (non-self-intersecting) polygon. This does
  * not always handle the case where the point lies on an edge of the polygon, which is
  * apparently an intended "edge" case (pun intended) for the algorithm used.

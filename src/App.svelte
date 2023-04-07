@@ -1,29 +1,76 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { closestPointOnSimplePolygonToTarget, type Point, type Polygon } from "./closest-point";
+    import { clonePolygon, closestPointOnSimplePolygonToTarget, type Point, type Polygon } from "./closest-point";
     import type { Unsubscriber } from "svelte/store";
 
-    let activeTool: "select" | "move" | "closest-points" | "triangle" | "square" | "hexagon" = "triangle";
+    type Tool = "select" | "move" | "closest-points" | "triangle" | "square" | "hexagon";
+
+    /**
+     * Maps from key code (as in, the 'key' property of a KeyboardEvent) to tool, for
+     * keyboard shortcuts.
+     */
+    const KEY_TO_TOOL: { readonly [key: string]: Tool } = {
+        1: "select",
+        2: "move",
+        3: "closest-points",
+        4: "triangle",
+        5: "square",
+        6: "hexagon"
+    };
+
+    /**
+     * These are used to compute the dotted line preview for adding new polygons, using
+     * the mouse coordinates from "mousemove" events to translate the respective polygon.
+     * 
+     * For any tools that do not involve adding shapes, there will be no base polygon and
+     * thus no indicator will be shown.
+     */
+    const BASE_POLYGONS: { readonly [T in Tool]?: Polygon } = {
+        triangle: [
+            [30, 0],
+            [60, 45],
+            [0, 45],
+        ],
+        square: [
+            [0, 0],
+            [50, 0],
+            [50, 50],
+            [0, 50],
+        ],
+        hexagon: [
+            [60, 26],
+            [45, 52],
+            [15, 52],
+            [0, 26],
+            [15, 0],
+            [45, 0],
+        ],
+    };
+
+    let activeTool: Tool = "triangle";
+    let addPolyPreview: Polygon | undefined;
     let polygons: Polygon[] = [];
     let closestPoints: Point[] = [];
     let svgEl: SVGElement;
     let svgWidth: number;
     let svgHeight: number;
 
-    // TODO
-    //
-    // Svelte supports bind:clientWidth and bind:clientHeight (and a couple others) to trivially
-    // watch the size of an element with just a couple lines of code, not to mention the reactive
-    // stuff gets cleaned up automatically when the component is destroyed, but..
-    //
-    // Unfortunately, those bindings were implemented before the ResizeObserver API was widely
-    // supported, and they work using a hack that involves adding an <iframe> as a child of the
-    // observed element, meaning we cannot use them for an <svg> element directly, not to mention
-    // worse performance than the ResizeObserver API (although that is irrelevant in this simple
-    // scenario). I could have wrapped the <svg> canvas in a <div>, but I decided that was more
-    // convoluted than just using a ResizeObserver manually with the Svelte onMount API.
-    //
-    // See https://github.com/sveltejs/svelte/issues/7583
+    /**
+     * TODO
+     *
+     * Svelte supports bind:clientWidth and bind:clientHeight (and a couple others) to trivially
+     * watch the size of an element with just a couple lines of code, not to mention the reactive
+     * stuff gets cleaned up automatically when the component is destroyed, but..
+     *
+     * Unfortunately, those bindings were implemented before the ResizeObserver API was widely
+     * supported, and they work using a hack that involves adding an <iframe> as a child of the
+     * observed element, meaning we cannot use them for an <svg> element directly, not to mention
+     * worse performance than the ResizeObserver API (although that is irrelevant in this simple
+     * scenario). I could have wrapped the <svg> canvas in a <div>, but I decided that was more
+     * convoluted than just using a ResizeObserver manually with the Svelte onMount API.
+     *
+     * See https://github.com/sveltejs/svelte/issues/7583
+     */
     onMount((): Unsubscriber => {
         const obs = new ResizeObserver(entries => {
             for (const { contentBoxSize: [size] } of entries) {
@@ -34,73 +81,36 @@
         return () => obs.disconnect(); // Svelte will call this when the component is destroyed
     });
 
-    function getRandomIntCoords(): Point {
-        const { width, height } = svgEl.getBoundingClientRect();
-
-        return [
-            Math.round(Math.random() * width),
-            Math.round(Math.random() * height),
-        ];
-    }
-
-    function addTriangle(ev: MouseEvent): void {
-        const [x, y] = getRandomIntCoords();
-
-        polygons.push([
-            [x, y],
-            [x + 30, y + 45],
-            [x - 30, y + 45],
-        ]);
-
-        // Svelte reactivity is based on assignments; it will remove this no-op
-        polygons = polygons;
-    }
-
-    function addSquare(ev: MouseEvent): void {
-        const [x, y] = getRandomIntCoords();
-
-        polygons.push([
-            [x, y],
-            [x + 50, y],
-            [x + 50, y + 50],
-            [x, y + 50],
-        ]);
-
-        // Svelte reactivity is based on assignments; it will remove this no-op
-        polygons = polygons;
-    }
-
-    function addHexagon(ev: MouseEvent): void {
-        const [x, y] = getRandomIntCoords();
-        const poly: Polygon = [
-            [x + 30, y + 0],
-            [x + 15, y + 26],
-            [x + -15, y + 26],
-            [x + -30, y + 0],
-            [x + -15, y + -26],
-            [x + 15, y + -26],
-        ];
-
-        polygons.push(poly);
-
-        // Svelte reactivity is based on assignments; it will remove this no-op
-        polygons = polygons;
-    }
-
     function onMouseMove(ev: MouseEvent): void {
         const { top, left } = svgEl.getBoundingClientRect();
-        const mouseLoc: Point = [ev.clientX - left, ev.clientY - top];
+        const mouseX = ev.clientX - left;
+        const mouseY = ev.clientY - top;
 
-        closestPoints = polygons.map(
-            poly => closestPointOnSimplePolygonToTarget(poly, mouseLoc),
-        );
+        closestPoints = activeTool === "closest-points" ? polygons.map(
+            poly => closestPointOnSimplePolygonToTarget(poly, [mouseX, mouseY]),
+        ) : [];
+        addPolyPreview = BASE_POLYGONS[activeTool]?.map(([x, y]) => [x + mouseX, y + mouseY]);
     }
 
     function onClick(ev: MouseEvent): void {
         const { top, left } = svgEl.getBoundingClientRect();
+        const mouseX = ev.clientX - left;
+        const mouseY = ev.clientY - top;
 
-        closestPoints.push([ev.clientX - left, ev.clientY - top]);
-        closestPoints = closestPoints;
+        if (addPolyPreview) {
+            polygons.push(clonePolygon(addPolyPreview));
+            polygons = polygons;
+        }
+    }
+
+    function onKeyDown(ev: KeyboardEvent): void {
+        if (!ev.metaKey && !ev.shiftKey) {
+            const tool = KEY_TO_TOOL[ev.key];
+
+            if (tool) {
+                activeTool = tool;
+            }
+        }
     }
 </script>
 
@@ -117,43 +127,50 @@
             aria-pressed={activeTool === "select"}
             on:click={() => activeTool = "select"}>
             <svg><use xlink:href="#cursor" /></svg>
+            <kbd>1</kbd>
         </button>
         <button
             aria-label="Move"
             aria-pressed={activeTool === "move"}
             on:click={() => activeTool = "move"}>
             <svg><use xlink:href="#move" /></svg>
+            <kbd>2</kbd>
         </button>
         <button
+            style="margin-bottom: 40px;"
             aria-label="Closest points"
             aria-pressed={activeTool === "closest-points"}
             on:click={() => activeTool = "closest-points"}>
             <svg><use xlink:href="#closest-point" /></svg>
+            <kbd>3</kbd>
         </button>
 
         <button
             aria-label="Triangle"
             aria-pressed={activeTool === "triangle"}
-            on:click={addTriangle}>
+            on:click={() => activeTool = "triangle"}>
             <svg><use xlink:href="#triangle" /></svg>
+            <kbd>4</kbd>
         </button>
         <button
             aria-label="Square"
             aria-pressed={activeTool === "square"}
-            on:click={addSquare}>
+            on:click={() => activeTool = "square"}>
             <svg><use xlink:href="#square" /></svg>
+            <kbd>5</kbd>
         </button>
         <button
             aria-label="Hexagon"
             aria-pressed={activeTool === "hexagon"}
-            on:click={addHexagon}>
+            on:click={() => activeTool = "hexagon"}>
             <svg><use xlink:href="#hexagon" /></svg>
+            <kbd>6</kbd>
         </button>
 
     </div>
 
 
-    <!-- Sorry Svelte, this element is not keyboard accessible -->
+    <!-- This visual interface is inherently keyboard inaccessible -->
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <svg
         id="canvas"
@@ -162,6 +179,7 @@
         bind:this={svgEl}
         on:mousemove={onMouseMove}
         on:click={onClick}>
+
         {#each polygons as poly}
             <polygon
                 fill="#E53935"
@@ -169,12 +187,30 @@
                 stroke-width="3"
                 points={poly.map(([x, y]) => x + "," + y).join(" ")} />
         {/each}
+
+        <!--
+            NOTE: all of the closest point circles are intentionally rendered after ALL
+            of the polygons, meaning that if two polygons are overlapping, the closest
+            point for the covered one will still be visible.
+        -->
         {#each closestPoints as [x, y]}
             <circle cx={x} cy={y} r="5" fill="#D500F9" />
         {/each}
+
+        {#if addPolyPreview}
+            <polygon
+                fill="transparent"
+                stroke="#FFFF00"
+                stroke-width="1"
+                stroke-dasharray="1 1"
+                points={addPolyPreview.map(([x, y]) => x + "," + y).join(" ")} />
+        {/if}
+
     </svg>
 
 </main>
+
+<svelte:window on:keydown|capture={onKeyDown} />
 
 <style>
     main {
@@ -190,6 +226,8 @@
         padding: var(--item-padding);
 
         min-width: 80px;
+        height: 100%;
+        overflow: auto;
 
         display: flex;
         flex-direction: column;
@@ -200,6 +238,8 @@
     }
 
     button {
+        position: relative;
+
         margin: 0;
         padding: 8px;
 
@@ -221,6 +261,26 @@
         width: 24px;
         height: 24px;
         line-height: 24px;
+    }
+
+    kbd {
+        font-family: monospace;
+        font-weight: 700;
+        color: #444;
+        font-size: 14px;
+        padding: 2px 6px;
+        border: 0.5px solid #777;
+        line-height: 14px;
+        border-radius: 4px;
+        box-shadow: 1px 1px #777;
+        background-color: #eee;
+        position: relative;
+    }
+
+    button > kbd {
+        position: absolute;
+        top: -10px;
+        right: -10px;
     }
 
     #canvas {

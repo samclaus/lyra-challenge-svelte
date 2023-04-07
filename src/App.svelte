@@ -1,7 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte";
     import { clonePolygon, closestPointOnSimplePolygonToTarget, type Point, type Polygon } from "./closest-point";
-    import type { Unsubscriber } from "svelte/store";
 
     type Tool = "select" | "move" | "closest-points" | "triangle" | "square" | "hexagon";
 
@@ -52,35 +50,7 @@
     let polygons: Polygon[] = [];
     let closestPoints: Point[] = [];
     let svgEl: SVGElement;
-    let svgWidth: number;
-    let svgHeight: number;
     let selectedIndex = -1;
-
-    /**
-     * TODO
-     *
-     * Svelte supports bind:clientWidth and bind:clientHeight (and a couple others) to trivially
-     * watch the size of an element with just a couple lines of code, not to mention the reactive
-     * stuff gets cleaned up automatically when the component is destroyed, but..
-     *
-     * Unfortunately, those bindings were implemented before the ResizeObserver API was widely
-     * supported, and they work using a hack that involves adding an <iframe> as a child of the
-     * observed element, meaning we cannot use them for an <svg> element directly, not to mention
-     * worse performance than the ResizeObserver API (although that is irrelevant in this simple
-     * scenario). I could have wrapped the <svg> canvas in a <div>, but I decided that was more
-     * convoluted than just using a ResizeObserver manually with the Svelte onMount API.
-     *
-     * See https://github.com/sveltejs/svelte/issues/7583
-     */
-    onMount((): Unsubscriber => {
-        const obs = new ResizeObserver(entries => {
-            for (const { contentBoxSize: [size] } of entries) {
-                console.log(size.inlineSize, size.blockSize);
-            }
-        });
-        obs.observe(svgEl);
-        return () => obs.disconnect(); // Svelte will call this when the component is destroyed
-    });
 
     function onMouseMove(ev: MouseEvent): void {
         const { top, left } = svgEl.getBoundingClientRect();
@@ -186,7 +156,6 @@
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <svg
         id="canvas"
-        viewBox="0 0 {svgWidth} {svgHeight}"
         xmlns="http://www.w3.org/2000/svg"
         bind:this={svgEl}
         on:click={onClick}>

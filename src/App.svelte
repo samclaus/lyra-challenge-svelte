@@ -50,8 +50,8 @@
 
         polygons.push([
             [x, y],
-            [x + 45, y + 60],
-            [x - 45, y + 60],
+            [x + 30, y + 45],
+            [x - 30, y + 45],
         ]);
 
         // Svelte reactivity is based on assignments; it will remove this no-op
@@ -75,12 +75,12 @@
     function addHexagon(ev: MouseEvent): void {
         const [x, y] = getRandomIntCoords();
         const poly: Polygon = [
-            [x + 50, y + 0],
-            [x + 25, y + 43.33],
-            [x + -25, y + 43.33],
-            [x + -50, y + 0],
-            [x + -25, y + -43.33],
-            [x + 25, y + -43.33],
+            [x + 30, y + 0],
+            [x + 15, y + 26],
+            [x + -15, y + 26],
+            [x + -30, y + 0],
+            [x + -15, y + -26],
+            [x + 15, y + -26],
         ];
 
         polygons.push(poly);
@@ -139,7 +139,11 @@
         on:mousemove={onMouseMove}
         on:click={onClick}>
         {#each polygons as poly}
-            <polygon stroke="blue" fill="red" points={poly.map(([x, y]) => x + "," + y).join(" ")} />
+            <polygon
+                fill="#E53935"
+                stroke="#00897B"
+                stroke-width="3"
+                points={poly.map(([x, y]) => x + "," + y).join(" ")} />
         {/each}
         {#each closestPoints as [x, y]}
             <circle cx={x} cy={y} r="5" fill="red" />

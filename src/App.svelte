@@ -364,14 +364,24 @@
         background-color: transparent;
         border: 1px solid black;
         border-radius: 4px;
-    }
 
-    button:not(:first-child) {
-        margin-top: var(--item-padding);
+        cursor: pointer;
     }
-
+    button:hover {
+        background-color: rgba(0, 0, 0, .12);
+    }
     button[aria-pressed="true"] {
         background-color: #00E676;
+    }
+    button[aria-pressed="true"]:hover {
+        background-color: #00C853;
+    }
+    button:focus,
+    button:focus-visible {
+        outline: 4px auto -webkit-focus-ring-color;
+    }
+    button:not(:first-child) {
+        margin-top: var(--item-padding);
     }
 
     button > svg {

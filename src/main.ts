@@ -1,7 +1,7 @@
 import "./app.css";
-import App from "./App.svelte";
+import Editor from "./Editor.svelte";
 
-const app = new App({
+const app = new Editor({
     target: document.body,
 });
 

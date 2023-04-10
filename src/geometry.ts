@@ -112,8 +112,8 @@ export function closestPointOnSimplePolygonToTarget(poly: Polygon, target: Point
     const [tx, ty] = target;
 
 	let
-        min_x: number,
-        min_y: number,
+        min_x = 0,
+        min_y = 0,
         min_dist = 100000,
         dist: number;
 
@@ -154,7 +154,5 @@ export function closestPointOnSimplePolygonToTarget(poly: Polygon, target: Point
 		}
 	}
 
-    // Assuming a valid polygon is passed to the function and not some garbage,
-    // these variables are guaranteed to have been assigned.
-	return [min_x!, min_y!];
+	return [min_x, min_y];
 }

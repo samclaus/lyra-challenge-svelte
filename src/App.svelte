@@ -51,21 +51,38 @@
     let closestPoints: Point[] = [];
     let svgEl: SVGElement;
     let selectedIndex = -1;
-    let lastMouseX = 0;
-    let lastMouseY = 0;
+    let mouseCoordsInSVG: Point | undefined;
     let draggingPolyIndex = -1;
-    let polyOffsetFromMouseX = 0;
-    let polyOffsetFromMouseY = 0;
+    let draggingPolyCoordsRelativeToMouse: Polygon = [];
 
+    // Most if not all of the tools require some sort of state cleanup to be run when
+    // they are deactivated (the "$:" tells the Svelte compiler to analyze variables
+    // this scope depends on and re-run the code whenever they change)
     $: {
         if (activeTool !== "select") {
             selectedIndex = -1;
         }
+        if (activeTool !== "move") {
+            draggingPolyIndex = -1;
+        }
         if (activeTool !== "closest-points") {
             closestPoints = [];
         }
-        
-        addPolyPreview = BASE_POLYGONS[activeTool]?.map(([x, y]) => [x + lastMouseX, y + lastMouseY]);
+    }
+
+    $: if (mouseCoordsInSVG) {
+        const [mouseX, mouseY] = mouseCoordsInSVG;
+        const _captureCoords = mouseCoordsInSVG; // So TypeScript knows they are defined within closures
+
+        closestPoints = activeTool === "closest-points" ? polygons.map(
+            poly => closestPointOnSimplePolygonToTarget(poly, _captureCoords),
+        ) : [];
+        addPolyPreview = BASE_POLYGONS[activeTool]?.map(
+            ([x, y]) => [x + mouseX, y + mouseY],
+        );
+    } else {
+        addPolyPreview = undefined;
+        closestPoints = [];
     }
 
     function getMouseCoordinatesInSVG(ev: MouseEvent): Point {
@@ -88,32 +105,60 @@
         return -1;
     }
 
-    function onMouseMove(ev: MouseEvent): void {
-        const [mouseX, mouseY] = getMouseCoordinatesInSVG(ev);
+    /**
+     * When a key is pressed (down) from anywhere within the app, we need to check if it is
+     * a hotkey. If it is, activate the relevant tool and intercept the event.
+     */
+    function windowKeyDown(ev: KeyboardEvent): void {
+        if (!ev.metaKey && !ev.shiftKey) {
+            const tool = KEY_TO_TOOL[ev.key];
 
-        closestPoints = activeTool === "closest-points" ? polygons.map(
-            poly => closestPointOnSimplePolygonToTarget(poly, [mouseX, mouseY]),
-        ) : [];
-        addPolyPreview = BASE_POLYGONS[activeTool]?.map(([x, y]) => [x + mouseX, y + mouseY]);
-
-        if (activeTool === "move" && draggingPolyIndex >= 0) {
-            const dx = mouseX - lastMouseX;
-            const dy = mouseY - lastMouseY;
-            
-            for (const point of polygons[draggingPolyIndex]) {
-                point[0] += dx;
-                point[1] += dy;
+            if (tool) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                activeTool = tool;
             }
-
-            // Trigger Svelte render
-            polygons = polygons;
         }
-
-        lastMouseX = mouseX;
-        lastMouseY = mouseY;
     }
 
-    function onClick(ev: MouseEvent): void {
+    /**
+     * If the user presses the mouse down on the SVG, we should start a drag operation if:
+     * 
+     * 1. They are currently using the "move" tool
+     * 2. They pressed on one of the polygons, and not any other element (including the SVG itself)
+     */
+    function svgMouseDown(ev: MouseEvent): void {
+        if (activeTool === "move") {
+            const index = getPolygonIndexForElement(ev.target);
+
+            if (index >= 0 && index < polygons.length) {
+                const poly = polygons[index]!;
+                const [mouseX, mouseY] = getMouseCoordinatesInSVG(ev);
+
+                draggingPolyIndex = index;
+                draggingPolyCoordsRelativeToMouse = poly.map(
+                    // NOTE: it is important that we make a DEEP copy of this polygon
+                    ([x, y]) => [x - mouseX, y - mouseY],
+                );
+            }
+        }
+    }
+
+    /**
+     * Whenever the user stops holding the mouse down, just make sure to stop any drag operation.
+     */
+    function svgMouseUp(ev: MouseEvent): void {
+        draggingPolyIndex = -1;
+    }
+
+    /**
+     * All of tools, except the "move" and "closest-points" tools, care about mouse clicks
+     * within the SVG. For the "select" tool, any polygon that gets clicked on should be
+     * marked as the selected on. For any of the polygon creation tools, we can simply
+     * make the current dotted line preview polygon 'permanent' by copying it into the
+     * polygon array.
+     */
+    function svgMouseClick(ev: MouseEvent): void {
         if (activeTool === "select") {
             const index = getPolygonIndexForElement(ev.target);
 
@@ -126,30 +171,51 @@
         }
     }
 
-    function onKeyDown(ev: KeyboardEvent): void {
-        if (!ev.metaKey && !ev.shiftKey) {
-            const tool = KEY_TO_TOOL[ev.key];
+    /**
+     * Every tool except the "select" tool cares about the mouse moving inside of the SVG. The
+     * "move" tool will directly use this opportunity to update the coordinates of whatever
+     * polygon (if any) we are currently dragging, while the rest of the tools (closest points,
+     * and the polygon creation tools) will have their logic run by Svelte once we update the
+     * current mouse coordinates.
+     */
+    function svgMouseMove(ev: MouseEvent): void {
+        // This will trigger a reactive declaration for rendering closest points, etc.
+        mouseCoordsInSVG = getMouseCoordinatesInSVG(ev);
 
-            if (tool) {
-                ev.preventDefault();
-                ev.stopPropagation();
-                activeTool = tool;
+        if (activeTool === "move") {
+            if (draggingPolyIndex >= 0 && draggingPolyIndex < polygons.length) {
+                const poly = polygons[draggingPolyIndex]!;
+                const len = Math.min(draggingPolyCoordsRelativeToMouse.length, poly.length);
+                const [mouseX, mouseY] = mouseCoordsInSVG;
+                
+                for (let i = 0; i < len; ++i) {
+                    const pAbs = poly[i]!;
+                    const pRel = draggingPolyCoordsRelativeToMouse[i]!;
+
+                    pAbs[0] = pRel[0] + mouseX;
+                    pAbs[1] = pRel[1] + mouseY;
+                }
+
+                // Trigger Svelte render
+                polygons = polygons;
             }
         }
     }
 
-    function tryStartPolyDrag(ev: MouseEvent): void {
-        const index = getPolygonIndexForElement(ev.target);
-
-        if (index >= 0) {
-            draggingPolyIndex = index;
-        }
-    }
-
-    function stopPolyDragIdempotent(ev: MouseEvent): void {
+    /**
+     * When the mouse leaves the canvas, we should stop any drag operation, but also get rid of
+     * any tool visuals like closest points and the mouse-following preview for adding a polygon.
+     */
+    function svgMouseLeave(ev: MouseEvent): void {
         draggingPolyIndex = -1;
+        closestPoints = [];
+        addPolyPreview = undefined;
+        mouseCoordsInSVG = undefined;
     }
 </script>
+
+<!-- Svelte lets us reference the window declaratively from within components -->
+<svelte:window on:keydown|capture={windowKeyDown} />
 
 <main>
 
@@ -220,10 +286,11 @@
         xmlns="http://www.w3.org/2000/svg"
         class={activeTool}
         bind:this={svgEl}
-        on:click={onClick}
-        on:mousedown={tryStartPolyDrag}
-        on:mouseup={stopPolyDragIdempotent}
-        on:mouseleave={stopPolyDragIdempotent}>
+        on:mousemove={svgMouseMove}
+        on:mousedown={svgMouseDown}
+        on:mouseup={svgMouseUp}
+        on:click={svgMouseClick}
+        on:mouseleave={svgMouseLeave}>
 
         {#each polygons as poly, i (i)}
             <polygon
@@ -262,8 +329,6 @@
     </svg>
 
 </main>
-
-<svelte:window on:keydown|capture={onKeyDown} on:mousemove={onMouseMove} />
 
 <style>
     main {

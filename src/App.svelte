@@ -53,6 +53,9 @@
     let selectedIndex = -1;
     let lastMouseX = 0;
     let lastMouseY = 0;
+    let draggingPolyIndex = -1;
+    let polyOffsetFromMouseX = 0;
+    let polyOffsetFromMouseY = 0;
 
     $: {
         if (activeTool !== "select") {
@@ -65,34 +68,59 @@
         addPolyPreview = BASE_POLYGONS[activeTool]?.map(([x, y]) => [x + lastMouseX, y + lastMouseY]);
     }
 
-    function onMouseMove(ev: MouseEvent): void {
+    function getMouseCoordinatesInSVG(ev: MouseEvent): Point {
         const { top, left } = svgEl.getBoundingClientRect();
-        const mouseX = ev.clientX - left;
-        const mouseY = ev.clientY - top;
+        return [ev.clientX - left, ev.clientY - top];
+    }
 
-        lastMouseX = mouseX;
-        lastMouseY = mouseY;
+    /**
+     * Returns the numerical index/ID of the polygon corresponding to the given DOM
+     * element, or -1 if the element does not correspond to a polygon.
+     */
+    function getPolygonIndexForElement(el: unknown): number {
+        if (el instanceof SVGPolygonElement) {
+            const index = +(el.dataset.index as any);
+
+            if (Number.isSafeInteger(index)) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    function onMouseMove(ev: MouseEvent): void {
+        const [mouseX, mouseY] = getMouseCoordinatesInSVG(ev);
+
         closestPoints = activeTool === "closest-points" ? polygons.map(
             poly => closestPointOnSimplePolygonToTarget(poly, [mouseX, mouseY]),
         ) : [];
         addPolyPreview = BASE_POLYGONS[activeTool]?.map(([x, y]) => [x + mouseX, y + mouseY]);
+
+        if (activeTool === "move" && draggingPolyIndex >= 0) {
+            const dx = mouseX - lastMouseX;
+            const dy = mouseY - lastMouseY;
+            
+            for (const point of polygons[draggingPolyIndex]) {
+                point[0] += dx;
+                point[1] += dy;
+            }
+
+            // Trigger Svelte render
+            polygons = polygons;
+        }
+
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
     }
 
     function onClick(ev: MouseEvent): void {
-        if (activeTool === "select" && ev.target instanceof SVGPolygonElement) {
-            const index = +(ev.target.dataset.index as any);
+        if (activeTool === "select") {
+            const index = getPolygonIndexForElement(ev.target);
 
-            if (Number.isSafeInteger(index)) {
+            if (index >= 0) {
                 selectedIndex = index;
-                return;
             }
-        }
-
-        const { top, left } = svgEl.getBoundingClientRect();
-        const mouseX = ev.clientX - left;
-        const mouseY = ev.clientY - top;
-
-        if (addPolyPreview) {
+        } else if (addPolyPreview) {
             polygons.push(clonePolygon(addPolyPreview));
             polygons = polygons;
         }
@@ -108,6 +136,18 @@
                 activeTool = tool;
             }
         }
+    }
+
+    function tryStartPolyDrag(ev: MouseEvent): void {
+        const index = getPolygonIndexForElement(ev.target);
+
+        if (index >= 0) {
+            draggingPolyIndex = index;
+        }
+    }
+
+    function stopPolyDragIdempotent(ev: MouseEvent): void {
+        draggingPolyIndex = -1;
     }
 </script>
 
@@ -180,7 +220,10 @@
         xmlns="http://www.w3.org/2000/svg"
         class={activeTool}
         bind:this={svgEl}
-        on:click={onClick}>
+        on:click={onClick}
+        on:mousedown={tryStartPolyDrag}
+        on:mouseup={stopPolyDragIdempotent}
+        on:mouseleave={stopPolyDragIdempotent}>
 
         {#each polygons as poly, i (i)}
             <polygon
@@ -212,7 +255,8 @@
                 stroke="#FFFF00"
                 stroke-width="1"
                 stroke-dasharray="1 1"
-                points={addPolyPreview.map(([x, y]) => x + "," + y).join(" ")} />
+                points={addPolyPreview.map(([x, y]) => x + "," + y).join(" ")}
+                pointer-events="none" />
         {/if}
 
     </svg>

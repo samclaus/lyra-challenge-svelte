@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { clonePolygon, closestPointOnSimplePolygonToTarget, type Point, type Polygon } from "./closest-point";
+    import { clonePolygon, closestPointOnSimplePolygonToTarget, type Point, type Polygon } from "./geometry";
 
     type Tool = "select" | "move" | "closest-points" | "triangle" | "square" | "hexagon";
 

@@ -212,6 +212,13 @@
         addPolyPreview = undefined;
         mouseCoordsInSVG = undefined;
     }
+
+    /**
+     * Writes the editor state to the console.
+     */
+    function saveEditorState(ev: MouseEvent): void {
+        console.log(JSON.stringify(polygons, undefined, 4));
+    }
 </script>
 
 <!-- Svelte lets us reference the window declaratively from within components -->
@@ -242,7 +249,6 @@
             <kbd aria-hidden="true">2</kbd>
         </button>
         <button
-            style="margin-bottom: 40px;"
             aria-label="Closest points"
             aria-keyshortcuts="3"
             aria-pressed={activeTool === "closest-points"}
@@ -250,6 +256,8 @@
             <svg><use xlink:href="#closest-point" /></svg>
             <kbd aria-hidden="true">3</kbd>
         </button>
+
+        <div style="flex: 1; max-height: 40px;" />
 
         <button
             aria-label="Triangle"
@@ -274,6 +282,14 @@
             on:click={() => activeTool = "hexagon"}>
             <svg><use xlink:href="#hexagon" /></svg>
             <kbd aria-hidden="true">6</kbd>
+        </button>
+
+        <div style="flex: 1;" />
+
+        <button
+            aria-label="Save document"
+            on:click={saveEditorState}>
+            <svg><use xlink:href="#export" /></svg>
         </button>
 
     </div>
@@ -383,28 +399,12 @@
     button:not(:first-child) {
         margin-top: var(--item-padding);
     }
-
     button > svg {
         display: block;
         width: 24px;
         height: 24px;
         line-height: 24px;
     }
-
-    kbd {
-        font-family: monospace;
-        font-weight: 700;
-        color: #444;
-        font-size: 14px;
-        padding: 2px 6px;
-        border: 0.5px solid #777;
-        line-height: 14px;
-        border-radius: 4px;
-        box-shadow: 1px 1px #777;
-        background-color: #eee;
-        position: relative;
-    }
-
     button > kbd {
         position: absolute;
         top: -10px;

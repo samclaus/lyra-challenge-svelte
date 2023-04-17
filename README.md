@@ -21,7 +21,7 @@ The Svelte compiler adds code to invalidate bindings wherever it sees an assignm
 
 Consider this an exhaustive list (I like everything else about my solution).
 
-- I ended up trying to work around Svelte's reactivity a little bit, and I'm not sure I would consider my code as idiomatic as it should be
+- I ended up trying to work around Svelte's reactivity a little bit, and I'm not sure I would consider my code as idiomatic as it maybe should be (I always worry about high-frequency DOM events like `mousemove` and don't really trust any reactive framework to handle them)
 - I didn't end up adding tooltips like I originally intended (got a life to live!)
 - I also didn't end up adding a help modal like I originally intended (same reason as the tooltips)
 - I probably could have written the code in a more performant way--I was trying to mutate and avoid allocating new arrays as much as possible but there are still a few spots that put some stress on the garbage collector

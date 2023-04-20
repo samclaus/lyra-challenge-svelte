@@ -347,6 +347,10 @@
 </main>
 
 <style>
+    * {
+        box-sizing: border-box;
+    }
+
     main {
         width: 100%;
         height: 100%;
@@ -405,6 +409,19 @@
         height: 24px;
         line-height: 24px;
     }
+    kbd {
+        font-family: monospace;
+        font-weight: 700;
+        color: #444;
+        font-size: 14px;
+        padding: 2px 6px;
+        border: 0.5px solid #777;
+        line-height: 14px;
+        border-radius: 4px;
+        box-shadow: 1px 1px #777;
+        background-color: #eee;
+        position: relative;
+    }
     button > kbd {
         position: absolute;
         top: -10px;
@@ -414,6 +431,8 @@
     #canvas {
         flex: 1 0 0;
         height: 100%;
+
+        background-color: #242424;
     }
 
     #canvas.select polygon {

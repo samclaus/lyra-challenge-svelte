@@ -1,5 +1,11 @@
 {
   "name": "lyra-challenge-svelte",
+  "description": "Svelte-based solution to a job candidate challenge from Lyra solar.",
+  "author": {
+    "name": "Sam Claus",
+    "email": "me@samcla.us",
+    "url": "https://samcla.us/"
+  },
   "license": "WTFPL",
   "private": true,
   "version": "0.0.0",

@@ -1,5 +1,6 @@
 {
   "name": "lyra-challenge-svelte",
+  "license": "WTFPL",
   "private": true,
   "version": "0.0.0",
   "type": "module",

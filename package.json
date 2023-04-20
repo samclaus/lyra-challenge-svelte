@@ -1,6 +1,10 @@
 {
   "name": "lyra-challenge-svelte",
   "description": "Svelte-based solution to a job candidate challenge from Lyra solar.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/samclaus/lyra-challenge-svelte.git"
+  },
   "author": {
     "name": "Sam Claus",
     "email": "me@samcla.us",

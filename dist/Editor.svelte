@@ -1,4 +1,5 @@
 <script>import { clonePolygon, closestPointOnSimplePolygonToTarget } from "./geometry";
+import Icon from "./Icon.svelte";
 const KEY_TO_TOOL = {
   1: "select",
   2: "move",
@@ -157,7 +158,7 @@ function saveEditorState(ev) {
             aria-keyshortcuts="1"
             aria-pressed={activeTool === "select"}
             on:click={() => activeTool = "select"}>
-            <svg><use xlink:href="#cursor" /></svg>
+            <Icon d="M13.64,21.97C13.14,22.21 12.54,22 12.31,21.5L10.13,16.76L7.62,18.78C7.45,18.92 7.24,19 7,19A1,1 0 0,1 6,18V3A1,1 0 0,1 7,2C7.24,2 7.47,2.09 7.64,2.23L7.65,2.22L19.14,11.86C19.57,12.22 19.62,12.85 19.27,13.27C19.12,13.45 18.91,13.57 18.7,13.61L15.54,14.23L17.74,18.96C18,19.46 17.76,20.05 17.26,20.28L13.64,21.97Z" />
             <kbd aria-hidden="true">1</kbd>
         </button>
         <button
@@ -165,7 +166,7 @@ function saveEditorState(ev) {
             aria-keyshortcuts="2"
             aria-pressed={activeTool === "move"}
             on:click={() => activeTool = "move"}>
-            <svg><use xlink:href="#move" /></svg>
+            <Icon d="M13,6V11H18V7.75L22.25,12L18,16.25V13H13V18H16.25L12,22.25L7.75,18H11V13H6V16.25L1.75,12L6,7.75V11H11V6H7.75L12,1.75L16.25,6H13Z" />
             <kbd aria-hidden="true">2</kbd>
         </button>
         <button
@@ -173,7 +174,7 @@ function saveEditorState(ev) {
             aria-keyshortcuts="3"
             aria-pressed={activeTool === "closest-points"}
             on:click={() => activeTool = "closest-points"}>
-            <svg><use xlink:href="#closest-point" /></svg>
+            <Icon d="M6.45,17.45L1,12L6.45,6.55L7.86,7.96L4.83,11H19.17L16.14,7.96L17.55,6.55L23,12L17.55,17.45L16.14,16.04L19.17,13H4.83L7.86,16.04L6.45,17.45Z" />
             <kbd aria-hidden="true">3</kbd>
         </button>
 
@@ -184,7 +185,7 @@ function saveEditorState(ev) {
             aria-keyshortcuts="4"
             aria-pressed={activeTool === "triangle"}
             on:click={() => activeTool = "triangle"}>
-            <svg><use xlink:href="#triangle" /></svg>
+            <Icon d="M1,21H23L12,2" />
             <kbd aria-hidden="true">4</kbd>
         </button>
         <button
@@ -192,7 +193,7 @@ function saveEditorState(ev) {
             aria-keyshortcuts="5"
             aria-pressed={activeTool === "square"}
             on:click={() => activeTool = "square"}>
-            <svg><use xlink:href="#square" /></svg>
+            <Icon d="M3,3V21H21V3" />
             <kbd aria-hidden="true">5</kbd>
         </button>
         <button
@@ -200,7 +201,7 @@ function saveEditorState(ev) {
             aria-keyshortcuts="6"
             aria-pressed={activeTool === "hexagon"}
             on:click={() => activeTool = "hexagon"}>
-            <svg><use xlink:href="#hexagon" /></svg>
+            <Icon d="M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5Z" />
             <kbd aria-hidden="true">6</kbd>
         </button>
 
@@ -209,7 +210,7 @@ function saveEditorState(ev) {
         <button
             aria-label="Save document"
             on:click={saveEditorState}>
-            <svg><use xlink:href="#export" /></svg>
+            <Icon d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z" />
         </button>
 
     </div>
@@ -322,12 +323,6 @@ function saveEditorState(ev) {
     }
     button:not(:first-child) {
         margin-top: var(--item-padding);
-    }
-    button > svg {
-        display: block;
-        width: 24px;
-        height: 24px;
-        line-height: 24px;
     }
     kbd {
         font-family: monospace;
